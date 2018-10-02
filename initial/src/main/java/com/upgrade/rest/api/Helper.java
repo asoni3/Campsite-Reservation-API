@@ -10,22 +10,22 @@ import java.util.concurrent.TimeUnit;
 public class Helper {
 
     public LocalDate parseStringToDate(String stringDate){
+        System.out.println("INFO: Parsing String to Date ...");
         LocalDate date = LocalDate.parse(stringDate);
         return date;
     }
 
     public boolean isValidStartDate(Date date){
 
+        System.out.println("INFO: Validating Start Date ...");
         Date today = java.sql.Date.valueOf(java.time.LocalDate.now());
 
         // You can reserve the campsite minimum 1 days before the date of arrival
         if(date.equals(today)){
-            System.out.print("Comparing "+date+" and "+ today);
             return false;
         }
         // You cannot make a reservation in the past
         else if(date.before(today)){
-            System.out.print("Comparing "+date+" before "+ today);
             return false;
         }
 
@@ -45,19 +45,21 @@ public class Helper {
     }
 
     public boolean compareStartEndDates(Date startDate, Date endDate){
-
+        System.out.println("INFO: Validating Start and End Date Range");
         // endDate needs to be the same or later than startDate
         if(endDate.before(startDate)){
             return false;
         }
-        long days = startDate.getTime() - endDate.getTime();
+        long days = endDate.getTime() - startDate.getTime();
         days = TimeUnit.DAYS.convert(days, TimeUnit.MILLISECONDS);
 //        LocalDate localStartDate = startDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 //        LocalDate localEndDate = endDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 //        long days = ChronoUnit.DAYS.between(localStartDate,localEndDate);
 
         // Campsite can be reserved for maximum 3 days
-        if(days>3){
+        System.out.println("Days = "+days);
+        if(days > 3){
+
             return false;
         }
 
@@ -66,6 +68,7 @@ public class Helper {
 
     public boolean isValidEndDate(Date date){
 
+        System.out.println("INFO: Validating End Date...");
         // You can reserve a month in advance
 
         LocalDate lastAllowedLocalDate = LocalDate.now().plusMonths(1);
@@ -87,8 +90,11 @@ public class Helper {
 
     public boolean isValidDateRange(Map<String, ReservationDTO> reservationsStore, Date startDate, Date endDate,
                                     String reservationID){
+
+        System.out.println("INFO: Validating if this reservation is safe...");
         for(Map.Entry<String, ReservationDTO> entry : reservationsStore.entrySet()){
-            if(entry.getKey()==reservationID){
+            if(reservationID.equals(entry.getKey())){
+                System.out.println("Reservation is same as the person trying to modify!");
                 continue;
             }
             ReservationDTO reservationDTO = entry.getValue();
