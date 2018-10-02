@@ -2,7 +2,7 @@ package com.upgrade.rest.api;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestParam;
-
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
@@ -10,8 +10,9 @@ import java.util.concurrent.atomic.AtomicLong;
 public class ReservationManager {
 
         // Variable Declarations
-        private final static AtomicLong counter = new AtomicLong();
+        private final AtomicLong counter = new AtomicLong();
         private final static Map<String, ReservationDTO> reservationsStore = new HashMap<String, ReservationDTO>();
+        private final static Calendar calendarInstance = Calendar.getInstance();
         ValidationManager validationManager = new ValidationManager();
         Helper helper = new Helper();
 
@@ -59,7 +60,6 @@ public class ReservationManager {
                 return messageDTO;
             }
             else{
-//                UUID uuid = UUID.randomUUID();
                 long longCounter = counter.incrementAndGet();
                 String randomUUIDString = Long.toString(longCounter);
                 newReservation.setEmailAddress(emailAddress);
@@ -67,6 +67,9 @@ public class ReservationManager {
                 newReservation.setStartDate(java.sql.Date.valueOf(helper.parseStringToDate(startDate)));
                 newReservation.setEndDate(java.sql.Date.valueOf(helper.parseStringToDate(endDate)));
                 newReservation.setReservationID(randomUUIDString);
+
+                // Storing the new reservation
+                reservationsStore.put(randomUUIDString, newReservation);
 
                 messageDTO.setStatus("SUCCESS");
                 messageDTO.setMessage("Congratulations!! You have successfully reserved the Campsite! Please note" +
@@ -77,11 +80,30 @@ public class ReservationManager {
 
 		// Modify an existing reservation
 		@RequestMapping("/modify/reservation")
-        public MessageDTO modifyReservation(@RequestParam String reservationID, @RequestParam String fullName,
-                                            @RequestParam String emailAddress, @RequestParam String startDate,
+        public MessageDTO modifyReservation(@RequestParam String reservationID,
+                                            @RequestParam(value="fullName", defaultValue="") String fullName,
+                                            @RequestParam(value="emailAddress", defaultValue="") String emailAddress,
+                                            @RequestParam String startDate,
                                             @RequestParam String endDate){
-            MessageDTO messageDTO = new MessageDTO();
 
+            MessageDTO messageDTO = new MessageDTO();
+            if(reservationsStore.containsKey(reservationID)){
+                ReservationDTO currentReservation = reservationsStore.get(reservationID);
+
+                if(fullName.length()!=0){
+                    currentReservation.setFullName(fullName);
+                }
+                if(emailAddress.length()!=0){
+                    currentReservation.setEmailAddress(emailAddress);
+                }
+
+
+            }
+            else{
+                messageDTO.setStatus("ERROR");
+                messageDTO.setMessage(" Oops! We were not able to find the reservation you are looking for. " +
+                        "Please re-enter the correct reservation ID!");
+            }
             return messageDTO;
         }
 
