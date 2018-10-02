@@ -2,10 +2,11 @@ package com.upgrade.rest.api;
 
 import java.time.LocalDate;
 import java.util.Date;
-import java.time.ZoneId;
-import java.time.temporal.ChronoUnit;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.Set;
+import java.util.Calendar;
 
 public class Helper {
 
@@ -108,5 +109,37 @@ public class Helper {
         return true;
     }
 
+    public Set<Date> getAvailableDates(Map<String, ReservationDTO> reservationsStore){
 
+
+        Set<Date> availableDates = new HashSet<Date>();
+
+        LocalDate current = java.time.LocalDate.now();
+        LocalDate lastAllowedLocalDate = LocalDate.now().plusMonths(1);
+
+        for(LocalDate date = current.plusDays(1); date.isBefore(lastAllowedLocalDate) ; date.plusDays(1)){
+            java.util.Date currentDate = java.sql.Date.valueOf(date);
+            availableDates.add(currentDate);
+        }
+        java.util.Date currentDate = java.sql.Date.valueOf(lastAllowedLocalDate);
+        availableDates.add(currentDate);
+
+        for(Map.Entry<String, ReservationDTO> entry : reservationsStore.entrySet()){
+
+            ReservationDTO reservationDTO = entry.getValue();
+            Calendar start = Calendar.getInstance();
+            start.setTime(reservationDTO.getStartDate());
+
+            Calendar end = Calendar.getInstance();
+            end.setTime(reservationDTO.getEndDate());
+            while( !start.after(end)){
+                Date targetDay = start.getTime();
+                // Do Work Here
+                availableDates.remove(targetDay);
+                start.add(Calendar.DATE, 1);
+            }
+
+        }
+        return availableDates;
+    }
 }

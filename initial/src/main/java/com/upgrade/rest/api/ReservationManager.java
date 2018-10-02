@@ -2,10 +2,14 @@ package com.upgrade.rest.api;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestParam;
+
+import java.sql.Time;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 @RestController
 public class ReservationManager {
@@ -14,9 +18,9 @@ public class ReservationManager {
         private final AtomicLong counter = new AtomicLong();
         private final static Map<String, ReservationDTO> reservationsStore = new HashMap<String, ReservationDTO>();
 
-        private final static Calendar calendarInstance = Calendar.getInstance();
         ValidationManager validationManager = new ValidationManager();
         Helper helper = new Helper();
+        private static boolean dateAvailability[] = new boolean[31];
 
         // Home/Root Page of the service
         @RequestMapping("/")
@@ -28,11 +32,15 @@ public class ReservationManager {
         }
 
         // Get all available dates for reservation of campsite
-        @RequestMapping("/get/dates")
-        public MessageDTO showAvailableDates(){
-            MessageDTO messageDTO = new MessageDTO();
-            return messageDTO;
-        }
+
+        // In Ideal scenario, if we maintain a database, we can create an index on the table
+        // and get the dates not reserved in a single query.
+        // However, this is not at all how production code would be written
+//        @RequestMapping("/get/dates")
+//        public MessageDTO showAvailableDates(){
+//
+//
+//        }
 
         // Create a new reservation for campsite
 		@RequestMapping("/create/reservation")
@@ -103,7 +111,15 @@ public class ReservationManager {
                 return messageDTO;
             }
             else{
-
+//                long days = endDateFormatted.getTime() - startDateFormatted.getTime();
+//                days = TimeUnit.DAYS.convert(days, TimeUnit.MILLISECONDS);
+//                Date temp = new Date();
+//                long startIndex = startDateFormatted.getTime() - temp.getTime();
+//                startIndex = TimeUnit.DAYS.convert(startIndex, TimeUnit.MILLISECONDS);
+//
+//                for(long i=startIndex;i<days;i++){
+//                    dateAvailability[(int)i] = false;
+//                }
                 newReservation.setEmailAddress(emailAddress);
                 newReservation.setFullName(fullName);
                 newReservation.setStartDate(startDateFormatted);
@@ -174,7 +190,8 @@ public class ReservationManager {
                         messageDTO.setMessage("Please Enter First and Last Name or First, Middle and Last Name");
                     }
                     else{
-                        messageDTO.setMessage(messageDTO.getMessage() + "; Please Enter First and Last Name or First, " +
+                        messageDTO.setMessage(messageDTO.getMessage() + "; Please Enter First " +
+                                "and Last Name or First, " +
                                 "Middle and Last Name");
                     }
                 }
@@ -236,5 +253,12 @@ public class ReservationManager {
                         "Please re-enter the correct reservation ID!");
             }
             return messageDTO;
+        }
+
+        // Get information for your reservation
+        @RequestMapping("get/reservation")
+        public ReservationDTO getReservationInfo(@RequestParam String reservationID){
+
+            return reservationsStore.get(reservationID);
         }
 }
