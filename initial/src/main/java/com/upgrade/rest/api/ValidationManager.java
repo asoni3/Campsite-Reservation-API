@@ -12,6 +12,7 @@ public class ValidationManager {
         }
         try{
             LocalDate date = LocalDate.parse(stringDate);
+
         }catch(Exception e){
             return false;
         }

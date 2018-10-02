@@ -3,6 +3,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestParam;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
@@ -12,6 +13,7 @@ public class ReservationManager {
         // Variable Declarations
         private final AtomicLong counter = new AtomicLong();
         private final static Map<String, ReservationDTO> reservationsStore = new HashMap<String, ReservationDTO>();
+
         private final static Calendar calendarInstance = Calendar.getInstance();
         ValidationManager validationManager = new ValidationManager();
         Helper helper = new Helper();
@@ -25,6 +27,13 @@ public class ReservationManager {
             return messageDTO;
         }
 
+        // Get all available dates for reservation of campsite
+        @RequestMapping("/get/dates")
+        public MessageDTO showAvailableDates(){
+            MessageDTO messageDTO = new MessageDTO();
+            return messageDTO;
+        }
+
         // Create a new reservation for campsite
 		@RequestMapping("/create/reservation")
     	public MessageDTO createReservation(@RequestParam String fullName, @RequestParam String emailAddress,
@@ -32,9 +41,34 @@ public class ReservationManager {
 
             MessageDTO messageDTO = new MessageDTO();
             ReservationDTO newReservation = new ReservationDTO();
+            Date startDateFormatted = null, endDateFormatted = null;
+            long longCounter = counter.incrementAndGet();
+            String randomUUIDString = Long.toString(longCounter);
+
             if(!validationManager.validateDate(startDate) || !validationManager.validateDate(endDate)){
                 messageDTO.setStatus("ERROR");
                 messageDTO.setMessage("Incorrect Date Format. Please follow the convention yyyy-mm-dd");
+            }
+            else{
+                startDateFormatted = java.sql.Date.valueOf(helper.parseStringToDate(startDate));
+                endDateFormatted = java.sql.Date.valueOf(helper.parseStringToDate(endDate));
+                System.out.println("Start Date Formatted = "+startDateFormatted);
+                System.out.println("End Date Formatted = "+endDateFormatted);
+                if(!helper.isValidStartDate(startDateFormatted)){
+                    messageDTO.setStatus("ERROR");
+                    messageDTO.setMessage("Invalid Start Date. You can reserve minimum 1 day ahead of arrival " +
+                            "and upto 1 month in advance. Please try again");
+                }
+                else if(!helper.isValidEndDate(endDateFormatted)){
+                    messageDTO.setStatus("ERROR");
+                    messageDTO.setMessage("Invalid End Date. You can reserve for maximum 3 days " +
+                            "and upto 1 month in advance. Please try again");
+                }
+                else if(!helper.compareStartEndDates(startDateFormatted, endDateFormatted)){
+                    messageDTO.setStatus("ERROR");
+                    messageDTO.setMessage("Invalid Start and End Date combination. You can reserve for maximum 3 " +
+                            "days and upto 1 month in advance");
+                }
             }
             if(!validationManager.validateEmailAddress(emailAddress)){
                 if(messageDTO.getMessage()==null){
@@ -56,16 +90,24 @@ public class ReservationManager {
                             "Middle and Last Name");
                 }
             }
+            if(!helper.isValidDateRange(reservationsStore, startDateFormatted, endDateFormatted, randomUUIDString)){
+
+                messageDTO.setStatus("ERROR");
+                messageDTO.setMessage("Unfortunately someone already has a reservation during this time frame. " +
+                        "Please try to reserve some other dates. If there are no available slots please keep " +
+                        "checking as new slots are available everyday. We hope to see you again! :)");
+
+            }
+
             if(messageDTO.getStatus()=="ERROR"){
                 return messageDTO;
             }
             else{
-                long longCounter = counter.incrementAndGet();
-                String randomUUIDString = Long.toString(longCounter);
+
                 newReservation.setEmailAddress(emailAddress);
                 newReservation.setFullName(fullName);
-                newReservation.setStartDate(java.sql.Date.valueOf(helper.parseStringToDate(startDate)));
-                newReservation.setEndDate(java.sql.Date.valueOf(helper.parseStringToDate(endDate)));
+                newReservation.setStartDate(startDateFormatted);
+                newReservation.setEndDate(endDateFormatted);
                 newReservation.setReservationID(randomUUIDString);
 
                 // Storing the new reservation
@@ -87,16 +129,87 @@ public class ReservationManager {
                                             @RequestParam String endDate){
 
             MessageDTO messageDTO = new MessageDTO();
+            ReservationDTO currentReservation;
+            Date startDateFormatted = null, endDateFormatted = null;
             if(reservationsStore.containsKey(reservationID)){
-                ReservationDTO currentReservation = reservationsStore.get(reservationID);
 
-                if(fullName.length()!=0){
-                    currentReservation.setFullName(fullName);
+                currentReservation = reservationsStore.get(reservationID);
+
+                if(!validationManager.validateDate(startDate) || !validationManager.validateDate(endDate)){
+                    messageDTO.setStatus("ERROR");
+                    messageDTO.setMessage("Incorrect Date Format. Please follow the convention yyyy-mm-dd");
                 }
-                if(emailAddress.length()!=0){
-                    currentReservation.setEmailAddress(emailAddress);
+                else{
+                    startDateFormatted = java.sql.Date.valueOf(helper.parseStringToDate(startDate));
+                    endDateFormatted = java.sql.Date.valueOf(helper.parseStringToDate(endDate));
+                    if(!helper.isValidStartDate(startDateFormatted)){
+                        messageDTO.setStatus("ERROR");
+                        messageDTO.setMessage("Invalid Start Date. You can reserve minimum 1 day ahead of arrival " +
+                                "and upto 1 month in advance. Please try again");
+                    }
+                    else if(!helper.isValidEndDate(endDateFormatted)){
+                        messageDTO.setStatus("ERROR");
+                        messageDTO.setMessage("Invalid End Date. You can reserve for maximum 3 days " +
+                                "and upto 1 month in advance. Please try again");
+                    }
+                    else if(!helper.compareStartEndDates(startDateFormatted, endDateFormatted)){
+                        messageDTO.setStatus("ERROR");
+                        messageDTO.setMessage("Invalid Start and End Date combination. You can reserve for maximum 3 " +
+                                "days and upto 1 month in advance");
+                    }
                 }
 
+
+                if(!helper.isValidDateRange(reservationsStore, startDateFormatted, endDateFormatted, reservationID)){
+
+                    messageDTO.setStatus("ERROR");
+                    messageDTO.setMessage("Unfortunately someone already has a reservation during this time frame. " +
+                            "Please try to reserve some other dates. If there are no available slots please keep " +
+                            "checking as new slots are available everyday. We hope to see you again! :)");
+
+                }
+                if(!validationManager.validateFullName(fullName)){
+                    if(messageDTO.getMessage()==null){
+                        messageDTO.setStatus("ERROR");
+                        messageDTO.setMessage("Please Enter First and Last Name or First, Middle and Last Name");
+                    }
+                    else{
+                        messageDTO.setMessage(messageDTO.getMessage() + "; Please Enter First and Last Name or First, " +
+                                "Middle and Last Name");
+                    }
+                }
+
+                if(!validationManager.validateEmailAddress(emailAddress)){
+                    if(messageDTO.getMessage()==null){
+                        messageDTO.setStatus("ERROR");
+                        messageDTO.setMessage("Invalid Email Address. Please enter a valid email address");
+                    }
+                    else{
+                        messageDTO.setMessage(messageDTO.getMessage() + "; Invalid Email Address. " +
+                                "Please enter a valid email address");
+                    }
+                }
+
+                if(messageDTO.getStatus()=="ERROR"){
+                    return messageDTO;
+                }
+
+                else {
+                    // If everything is valid, change the reservation
+                    currentReservation.setEndDate(endDateFormatted);
+                    currentReservation.setStartDate(startDateFormatted);
+                    if(emailAddress.length()!=0){
+                        currentReservation.setEmailAddress(emailAddress);
+                    }
+                    if(fullName.length()!=0){
+                        currentReservation.setFullName(fullName);
+                    }
+
+                    // Storing the modified reservation
+                    reservationsStore.put(reservationID, currentReservation);
+                    messageDTO.setStatus("SUCCESS");
+                    messageDTO.setMessage("Hurray! Your reservation "+reservationID+" is modified!");
+                }
 
             }
             else{
