@@ -2,8 +2,8 @@ package com.upgrade.rest.api;
 
 public class MessageDTO {
 
-    String status;
-    String message;
+    private String status;
+    private String message;
     public MessageDTO(){
 
     }
@@ -11,6 +11,7 @@ public class MessageDTO {
         this.message = message;
         this.status = status;
     }
+
     public void setMessage(String message) {
         this.message = message;
     }

@@ -10,8 +10,8 @@ import java.util.concurrent.atomic.AtomicLong;
 public class ReservationManager {
 
         // Variable Declarations
-        private final AtomicLong counter = new AtomicLong();
-        private final Map<String, ReservationDTO> reservationsStore = new HashMap<>();
+        private final static AtomicLong counter = new AtomicLong();
+        private final static Map<String, ReservationDTO> reservationsStore = new HashMap<String, ReservationDTO>();
         ValidationManager validationManager = new ValidationManager();
         Helper helper = new Helper();
 
@@ -75,17 +75,31 @@ public class ReservationManager {
 			return messageDTO;
 		}
 
+		// Modify an existing reservation
 		@RequestMapping("/modify/reservation")
-        public MessageDTO modifyReservation(@RequestParam String reservationID, @RequestParam String fullName){
+        public MessageDTO modifyReservation(@RequestParam String reservationID, @RequestParam String fullName,
+                                            @RequestParam String emailAddress, @RequestParam String startDate,
+                                            @RequestParam String endDate){
             MessageDTO messageDTO = new MessageDTO();
 
             return messageDTO;
         }
 
+        // Delete an existing reservation
         @RequestMapping("/delete/reservation")
         public MessageDTO deleteReservation(@RequestParam String reservationID){
             MessageDTO messageDTO = new MessageDTO();
-
+            if(reservationsStore.containsKey(reservationID)){
+                reservationsStore.remove(reservationID);
+                messageDTO.setStatus("SUCCESS");
+                messageDTO.setMessage("Your reservation (ID: "+reservationID+") has been deleted :( ." +
+                        " Hope to see you some other day at the campsite! :) :D ");
+            }
+            else{
+                messageDTO.setStatus("ERROR");
+                messageDTO.setMessage(" Oops! We were not able to find the reservation you are looking for. " +
+                        "Please re-enter the correct reservation ID!");
+            }
             return messageDTO;
         }
 }

@@ -2,11 +2,12 @@ package com.upgrade.rest.api;
 import java.util.Date;
 
 class ReservationDTO {
-    String fullName;
-    String emailAddress;
-    Date startDate;
-    Date endDate;
-    String reservationId;
+
+    private String fullName;
+    private String emailAddress;
+    private Date startDate;
+    private Date endDate;
+    private String reservationId;
 
     public ReservationDTO(){
 
