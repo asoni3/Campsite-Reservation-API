@@ -1,0 +1,6 @@
+com/upgrade/rest/api/MessageDTO.class
+com/upgrade/rest/api/ReservationManager.class
+com/upgrade/rest/api/Application.class
+com/upgrade/rest/api/ReservationDTO.class
+com/upgrade/rest/api/ValidationManager.class
+com/upgrade/rest/api/Helper.class
