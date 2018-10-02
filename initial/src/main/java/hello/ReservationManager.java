@@ -4,7 +4,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestParam;
 import java.util.Date;
 import java.util.UUID;
-import java.text.SimpleDateFormat;http://localhost:8080/reservations?fullName=Abhay Soni&emailAddress=abc@xyz.com&startDate=09/01/2018&endDate=09/04/2018
+import java.text.SimpleDateFormat;
 
 @RestController
 public class ReservationManager {
