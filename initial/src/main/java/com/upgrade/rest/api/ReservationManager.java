@@ -1,14 +1,11 @@
 package com.upgrade.rest.api;
+import javafx.beans.binding.StringBinding;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestParam;
-
 import java.sql.Time;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.time.LocalDate;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 @RestController
@@ -20,27 +17,71 @@ public class ReservationManager {
 
         ValidationManager validationManager = new ValidationManager();
         Helper helper = new Helper();
-        private static boolean dateAvailability[] = new boolean[31];
+
+//        private static boolean dateAvailability[] = new boolean[31];
 
         // Home/Root Page of the service
         @RequestMapping("/")
         public MessageDTO getMessage(){
             MessageDTO messageDTO = new MessageDTO();
             messageDTO.setStatus("SUCCESS");
-            messageDTO.setMessage("Hello! The campsite reservation API is working! Hurray!!");
+            messageDTO.setMessage("Hello! The campsite reservation API is working properly! Hurrayy!!!");
             return messageDTO;
         }
 
         // Get all available dates for reservation of campsite
 
-        // In Ideal scenario, if we maintain a database, we can create an index on the table
+        // In Ideal scenario, if we maintain a database, we can create an index for the table
         // and get the dates not reserved in a single query.
         // However, this is not at all how production code would be written
-//        @RequestMapping("/get/dates")
-//        public MessageDTO showAvailableDates(){
-//
-//
-//        }
+        @RequestMapping("/get/dates")
+        public MessageDTO showAvailableDates(){
+            System.out.println("");
+            MessageDTO messageDTO = new MessageDTO();
+            messageDTO.setStatus("SUCCESS");
+            StringBuilder stringBuilder = new StringBuilder("");
+            Set<Date> reserved = new HashSet<>();
+
+            for(Map.Entry<String, ReservationDTO> entry: reservationsStore.entrySet()){
+                ReservationDTO reservationDTO = entry.getValue();
+                Calendar start = Calendar.getInstance();
+                start.setTime(reservationDTO.getStartDate());
+
+                Calendar end = Calendar.getInstance();
+                end.setTime(reservationDTO.getEndDate());
+
+                while( !start.after(end)){
+                    Date targetDay = start.getTime();
+                    reserved.add(targetDay);
+                    start.add(Calendar.DATE, 1);
+                }
+            }
+            LocalDate localToday = java.time.LocalDate.now();
+            localToday = localToday.plusDays(1);
+            Date today = java.sql.Date.valueOf(localToday);
+            LocalDate lastAllowedLocalDate = LocalDate.now().plusMonths(1);
+            java.util.Date lastAllowedDate = java.sql.Date.valueOf(lastAllowedLocalDate);
+            Calendar start = Calendar.getInstance();
+            start.setTime(today);
+
+            Calendar end = Calendar.getInstance();
+            end.setTime(lastAllowedDate);
+
+            while( !start.after(end)){
+                Date targetDay = start.getTime();
+                if(reserved.contains(targetDay)){
+                    continue;
+                }
+                else{
+                    String temp = targetDay.toString();
+                    temp = temp.substring(0,10);
+                    stringBuilder.append(temp+",");
+                }
+                start.add(Calendar.DATE, 1);
+            }
+            messageDTO.setMessage(stringBuilder.toString());
+            return messageDTO;
+        }
 
         // Create a new reservation for campsite
 		@RequestMapping("/create/reservation")
@@ -111,15 +152,7 @@ public class ReservationManager {
                 return messageDTO;
             }
             else{
-//                long days = endDateFormatted.getTime() - startDateFormatted.getTime();
-//                days = TimeUnit.DAYS.convert(days, TimeUnit.MILLISECONDS);
-//                Date temp = new Date();
-//                long startIndex = startDateFormatted.getTime() - temp.getTime();
-//                startIndex = TimeUnit.DAYS.convert(startIndex, TimeUnit.MILLISECONDS);
-//
-//                for(long i=startIndex;i<days;i++){
-//                    dateAvailability[(int)i] = false;
-//                }
+
                 newReservation.setEmailAddress(emailAddress);
                 newReservation.setFullName(fullName);
                 newReservation.setStartDate(startDateFormatted);
@@ -256,7 +289,7 @@ public class ReservationManager {
         }
 
         // Get information for your reservation
-        @RequestMapping("get/reservation")
+        @RequestMapping("/get/reservation")
         public ReservationDTO getReservationInfo(@RequestParam String reservationID){
 
             return reservationsStore.get(reservationID);

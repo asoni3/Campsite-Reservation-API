@@ -3,9 +3,9 @@ package com.upgrade.rest.api;
 import java.time.LocalDate;
 import java.util.regex.Pattern;
 
-public class ValidationManager {
+class ValidationManager {
 
-    public boolean validateDate(String stringDate){
+    boolean validateDate(String stringDate){
         if(stringDate.length()==0){
             return false;
         }
@@ -18,7 +18,7 @@ public class ValidationManager {
         return true;
     }
 
-    public boolean validateEmailAddress(String email){
+    boolean validateEmailAddress(String email){
         String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\."+
                 "[a-zA-Z0-9_+&*-]+)*@" +
                 "(?:[a-zA-Z0-9-]+\\.)+[a-z" +
@@ -30,12 +30,12 @@ public class ValidationManager {
         return pat.matcher(email).matches();
     }
 
-    public boolean validateFullName(String fullName){
+    boolean validateFullName(String fullName){
         if(fullName.length()==0){
             return false;
         }
         String arr[] = fullName.split(" ");
-        if(arr.length<2 && arr.length>3){
+        if(arr.length<2 || arr.length>3){
             return false;
         }
         return true;
