@@ -17,7 +17,9 @@ public class ReservationManager {
 
         ValidationManager validationManager = new ValidationManager();
         Helper helper = new Helper();
-
+        Calendar start = Calendar.getInstance();
+        Calendar end = Calendar.getInstance();
+        Set<Date> reserved = new HashSet<>();
 //        private static boolean dateAvailability[] = new boolean[31];
 
         // Home/Root Page of the service
@@ -34,54 +36,49 @@ public class ReservationManager {
         // In Ideal scenario, if we maintain a database, we can create an index for the table
         // and get the dates not reserved in a single query.
         // However, this is not at all how production code would be written
-        @RequestMapping("/get/dates")
-        public MessageDTO showAvailableDates(){
-            System.out.println("");
-            MessageDTO messageDTO = new MessageDTO();
-            messageDTO.setStatus("SUCCESS");
-            StringBuilder stringBuilder = new StringBuilder("");
-            Set<Date> reserved = new HashSet<>();
 
-            for(Map.Entry<String, ReservationDTO> entry: reservationsStore.entrySet()){
-                ReservationDTO reservationDTO = entry.getValue();
-                Calendar start = Calendar.getInstance();
-                start.setTime(reservationDTO.getStartDate());
-
-                Calendar end = Calendar.getInstance();
-                end.setTime(reservationDTO.getEndDate());
-
-                while( !start.after(end)){
-                    Date targetDay = start.getTime();
-                    reserved.add(targetDay);
-                    start.add(Calendar.DATE, 1);
-                }
-            }
-            LocalDate localToday = java.time.LocalDate.now();
-            localToday = localToday.plusDays(1);
-            Date today = java.sql.Date.valueOf(localToday);
-            LocalDate lastAllowedLocalDate = LocalDate.now().plusMonths(1);
-            java.util.Date lastAllowedDate = java.sql.Date.valueOf(lastAllowedLocalDate);
-            Calendar start = Calendar.getInstance();
-            start.setTime(today);
-
-            Calendar end = Calendar.getInstance();
-            end.setTime(lastAllowedDate);
-
-            while( !start.after(end)){
-                Date targetDay = start.getTime();
-                if(reserved.contains(targetDay)){
-                    continue;
-                }
-                else{
-                    String temp = targetDay.toString();
-                    temp = temp.substring(0,10);
-                    stringBuilder.append(temp+",");
-                }
-                start.add(Calendar.DATE, 1);
-            }
-            messageDTO.setMessage(stringBuilder.toString());
-            return messageDTO;
-        }
+//        @RequestMapping("/get/dates")
+//        public MessageDTO showAvailableDates(){
+//            System.out.println("");
+//            MessageDTO messageDTO = new MessageDTO();
+//            messageDTO.setStatus("SUCCESS");
+//            StringBuilder stringBuilder = new StringBuilder("");
+//            reserved = new HashSet<>();
+//
+//            for(Map.Entry<String, ReservationDTO> entry: reservationsStore.entrySet()){
+//                ReservationDTO reservationDTO = entry.getValue();
+//
+//                start.setTime(reservationDTO.getStartDate());
+//                end.setTime(reservationDTO.getEndDate());
+//                while( !start.after(end)){
+//                    Date targetDay = start.getTime();
+//                    reserved.add(targetDay);
+//                    start.add(Calendar.DATE, 1);
+//                }
+//            }
+//            LocalDate localToday = java.time.LocalDate.now();
+//            localToday = localToday.plusDays(1);
+//            Date today = java.sql.Date.valueOf(localToday);
+//            LocalDate lastAllowedLocalDate = LocalDate.now().plusMonths(1);
+//            java.util.Date lastAllowedDate = java.sql.Date.valueOf(lastAllowedLocalDate);
+//            start.setTime(today);
+//            end.setTime(lastAllowedDate);
+//
+//            while( !start.after(end)){
+//                Date targetDay = start.getTime();
+//                if(reserved.contains(targetDay)){
+//                    continue;
+//                }
+//                else{
+//                    String temp = targetDay.toString();
+//                    temp = temp.substring(4,10);
+//                    stringBuilder.append(temp+",");
+//                }
+//                start.add(Calendar.DATE, 1);
+//            }
+//            messageDTO.setMessage(stringBuilder.toString());
+//            return messageDTO;
+//        }
 
         // Create a new reservation for campsite
 		@RequestMapping("/create/reservation")
